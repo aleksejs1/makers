@@ -1,0 +1,40 @@
+# Development environment with hot reload and a local mail catcher.
+#
+#   docker compose -f compose.dev.yaml up
+#
+# App:     http://localhost:8080
+# Mailpit: http://localhost:8025 (login codes arrive here)
+
+services:
+  app:
+    build:
+      context: .
+      target: dev
+    environment:
+      MAKERS_ENV: dev
+      MAKERS_PORT: 8080
+      MAKERS_BASE_URL: http://localhost:8080
+      MAKERS_ADMIN_EMAILS: admin@makers.lv
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      SMTP_TLS: none
+      SMTP_FROM: makers.lv <noreply@makers.lv>
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/src
+      - dev-data:/data
+      - go-cache:/root/.cache/go-build
+      - go-mod:/go/pkg/mod
+    depends_on:
+      - mailpit
+
+  mailpit:
+    image: axllent/mailpit:v1.29
+    ports:
+      - "8025:8025"
+
+volumes:
+  dev-data:
+  go-cache:
+  go-mod:

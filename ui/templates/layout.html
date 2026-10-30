@@ -1,0 +1,91 @@
+{{define "layout"}}<!doctype html>
+<html lang="{{.Lang}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{if .Title}}{{.Title}} · {{end}}makers.lv</title>
+  {{- with .Description}}
+  <meta name="description" content="{{.}}">
+  {{- end}}
+  {{- if .NoIndex}}
+  <meta name="robots" content="noindex">
+  {{- end}}
+  <link rel="canonical" href="{{.Canonical}}">
+  {{- range .Langs}}
+  <link rel="alternate" hreflang="{{.}}" href="{{$.Abs ($.LangURL .)}}">
+  {{- end}}
+  <link rel="alternate" hreflang="x-default" href="{{.Abs "/"}}">
+  <link rel="alternate" type="application/rss+xml" title="makers.lv" href="/feed.xml?lang={{.Lang}}">
+  <meta property="og:site_name" content="makers.lv">
+  <meta property="og:type" content="{{.OGType}}">
+  <meta property="og:title" content="{{if .Title}}{{.Title}}{{else}}makers.lv{{end}}">
+  <meta property="og:url" content="{{.Canonical}}">
+  <meta property="og:locale" content="{{.T "meta.og_locale"}}">
+  {{- with .Description}}
+  <meta property="og:description" content="{{.}}">
+  {{- end}}
+  <meta name="twitter:card" content="summary">
+  <meta name="color-scheme" content="light dark">
+  <meta name="htmx-config" content='{"includeIndicatorStyles":false,"allowEval":false}'>
+  <link rel="icon" href="{{asset "favicon.svg"}}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{asset "css/app.css"}}">
+  <script src="{{asset "js/htmx.min.js"}}" defer></script>
+  <script src="{{asset "js/app.js"}}" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">{{.T "nav.skip"}}</a>
+  <header class="site-header">
+    <div class="wrap header-row">
+      <a class="logo" href="{{.URL "/"}}" aria-label="makers.lv">
+        <span class="logo-mark" aria-hidden="true">m</span><span class="logo-text">makers<span class="logo-tld">.lv</span></span>
+      </a>
+      <nav class="nav" aria-label="{{.T "nav.main"}}">
+        <a href="{{.URL "/"}}"{{if eq .Path "/"}} aria-current="page"{{end}}>{{.T "nav.projects"}}</a>
+        <a href="{{.URL "/about"}}"{{if eq .Path "/about"}} aria-current="page"{{end}}>{{.T "nav.about"}}</a>
+      </nav>
+      <div class="header-actions">
+        <nav class="langs" aria-label="{{.T "nav.language"}}">
+          {{- range .Langs}}
+          <a href="{{$.LangURL .}}" hreflang="{{.}}" lang="{{.}}"{{if eq . $.Lang}} aria-current="true"{{end}}>{{.}}</a>
+          {{- end}}
+        </nav>
+        {{- if .User}}
+        <a class="btn btn-primary btn-sm" href="{{.URL "/new"}}">+ <span class="hide-xs">{{.T "nav.add_project"}}</span></a>
+        <details class="menu">
+          <summary aria-label="{{.T "nav.account"}}"><span class="avatar avatar-sm {{avatar .User.Handle}}" aria-hidden="true">{{initials .User.Name}}</span></summary>
+          <div class="menu-panel">
+            <p class="menu-user"><strong>{{.User.Name}}</strong><br><span class="muted">@{{.User.Handle}}</span></p>
+            <a href="{{.URL (print "/u/" .User.Handle)}}">{{.T "nav.my_projects"}}</a>
+            <a href="{{.URL "/settings"}}">{{.T "nav.settings"}}</a>
+            <form method="post" action="{{.URL "/logout"}}"><button type="submit" class="linklike">{{.T "nav.logout"}}</button></form>
+          </div>
+        </details>
+        {{- else}}
+        <a class="btn btn-sm" href="{{.URL "/login"}}">{{.T "nav.login"}}</a>
+        {{- end}}
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="wrap">
+    {{- with .Flash}}
+    <div class="flash" role="status">{{$.T .}}</div>
+    {{- end}}
+    {{template "content" .}}
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-row">
+      <p>{{.T "footer.tagline"}}</p>
+      <nav aria-label="{{.T "nav.footer"}}">
+        <a href="{{.URL "/about"}}">{{.T "nav.about"}}</a>
+        <a href="{{.URL "/privacy"}}">{{.T "nav.privacy"}}</a>
+        <a href="https://github.com/aleksejs1/makers" rel="noopener">GitHub</a>
+        <a href="/feed.xml?lang={{.Lang}}">RSS</a>
+      </nav>
+      <p class="muted small">v{{.Version}} · {{.T "footer.license"}}</p>
+    </div>
+  </footer>
+</body>
+</html>
+{{end}}

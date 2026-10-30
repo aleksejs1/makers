@@ -1,0 +1,17 @@
+# Hot reload for development: https://github.com/air-verse/air
+root = "."
+tmp_dir = "tmp"
+
+[build]
+cmd = "go build -o ./tmp/makers ./cmd/makers"
+entrypoint = ["./tmp/makers", "serve"]
+include_ext = ["go", "html", "css", "js", "toml", "sql", "svg"]
+exclude_dir = ["tmp", "data", ".git", ".github"]
+delay = 300
+stop_on_error = true
+
+[log]
+time = false
+
+[misc]
+clean_on_exit = true

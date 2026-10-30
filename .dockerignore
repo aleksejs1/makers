@@ -1,0 +1,10 @@
+.git
+.github
+.idea
+.vscode
+*.db
+*.db-*
+tmp/
+data/
+bin/
+dist/

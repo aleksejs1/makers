@@ -1,0 +1,57 @@
+{{define "content"}}
+{{- $d := .Data}}
+<section class="hero">
+  <h1>{{.T "home.heading"}}</h1>
+  <p class="lead">{{.T "home.lead"}}</p>
+  {{- if not .User}}
+  <p><a class="btn btn-primary" href="{{.URL "/new"}}">{{.T "home.cta"}}</a></p>
+  {{- end}}
+</section>
+
+<form id="filters" class="filters" role="search" method="get" action="{{.URL "/"}}"
+      hx-get="{{.URL "/"}}" hx-target="#projects" hx-swap="outerHTML" hx-push-url="true" hx-trigger="change, submit">
+  <label class="filter-q">
+    <span class="sr-only">{{.T "filters.search"}}</span>
+    <input type="search" name="q" value="{{$d.Filters.Q}}" placeholder="{{.T "filters.search_placeholder"}}" maxlength="100"
+           hx-get="{{.URL "/"}}" hx-trigger="input changed delay:350ms, search" hx-include="closest form">
+  </label>
+  <label>
+    <span class="sr-only">{{.T "filters.category"}}</span>
+    <select name="category">
+      <option value="">{{.T "filters.all_categories"}}</option>
+      {{- range $d.Categories}}
+      <option value="{{.}}"{{if eq . $d.Filters.Category}} selected{{end}}>{{$.T (print "category." .)}}</option>
+      {{- end}}
+    </select>
+  </label>
+  <label>
+    <span class="sr-only">{{.T "filters.status"}}</span>
+    <select name="status">
+      <option value="">{{.T "filters.all_statuses"}}</option>
+      {{- range $d.Statuses}}
+      <option value="{{.}}"{{if eq . $d.Filters.Status}} selected{{end}}>{{$.T (print "status." .)}}</option>
+      {{- end}}
+    </select>
+  </label>
+  <label>
+    <span class="sr-only">{{.T "filters.tech"}}</span>
+    <input type="text" name="tech" value="{{$d.Filters.Tech}}" list="tech-hints" placeholder="{{.T "filters.tech"}}" maxlength="30">
+    <datalist id="tech-hints">{{range $d.TechHints}}<option value="{{.}}">{{end}}</datalist>
+  </label>
+  <label>
+    <span class="sr-only">{{.T "filters.sort"}}</span>
+    <select name="sort">
+      <option value="new"{{if eq $d.Filters.Sort "new"}} selected{{end}}>{{.T "sort.new"}}</option>
+      <option value="popular"{{if eq $d.Filters.Sort "popular"}} selected{{end}}>{{.T "sort.popular"}}</option>
+      <option value="launch"{{if eq $d.Filters.Sort "launch"}} selected{{end}}>{{.T "sort.launch"}}</option>
+    </select>
+  </label>
+  {{- with $d.Filters.AI}}
+  <input type="hidden" name="ai" value="{{.}}">
+  <a class="chip chip-ai filter-chip" href="{{$.URL "/"}}{{$d.Filters.WithoutAI.QueryString 1}}" title="{{$.T "filters.remove"}}">{{$.T "field.ai"}}: {{.}} ✕</a>
+  {{- end}}
+  <noscript><button type="submit" class="btn">{{.T "filters.apply"}}</button></noscript>
+</form>
+
+{{template "project_list" (pair . $d)}}
+{{end}}

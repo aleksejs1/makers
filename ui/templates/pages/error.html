@@ -1,0 +1,8 @@
+{{define "content"}}
+<div class="error-page">
+  <p class="error-code">{{.Data}}</p>
+  <h1>{{.Title}}</h1>
+  <p>{{.T (print "error." .Data ".text")}}</p>
+  <p><a class="btn btn-primary" href="{{.URL "/"}}">{{.T "error.home"}}</a></p>
+</div>
+{{end}}

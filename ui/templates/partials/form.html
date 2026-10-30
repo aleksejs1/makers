@@ -1,0 +1,54 @@
+{{/* Form field helpers. Data: Pair{V, field}. The page's .Data must have an Errors field. */}}
+
+{{define "field_error"}}
+{{- with .V.Data.Errors.Get .X}}<p class="field-error">{{$.V.T .}}</p>{{end}}
+{{- end}}
+
+{{define "field_label"}}
+<label for="f-{{.X.Name}}">{{.V.T (print "field." .X.Name)}}{{if .X.Required}} <span class="req" aria-hidden="true">*</span>{{end}}</label>
+{{- end}}
+
+{{define "field_hint"}}
+{{- $key := print "field." .X.Name ".hint"}}
+{{- if .V.Has $key}}<p class="hint" id="h-{{.X.Name}}">{{.V.T $key}}</p>{{end}}
+{{- end}}
+
+{{define "field_text"}}
+<div class="field{{if .V.Data.Errors.Has .X.Name}} has-error{{end}}">
+  {{template "field_label" .}}
+  <input id="f-{{.X.Name}}" name="{{.X.Name}}" type="{{.X.Type}}" value="{{.X.Value}}"
+         {{- if .X.Max}} maxlength="{{.X.Max}}"{{end}}{{if .X.Required}} required{{end}}
+         {{- if eq .X.Type "url"}} inputmode="url" placeholder="https://"{{end}}
+         {{- if .V.Has (print "field." .X.Name ".hint")}} aria-describedby="h-{{.X.Name}}"{{end}}
+         {{- if .V.Data.Errors.Has .X.Name}} aria-invalid="true"{{end}}>
+  {{template "field_hint" .}}
+  {{template "field_error" (pair .V .X.Name)}}
+</div>
+{{end}}
+
+{{define "field_select"}}
+<div class="field{{if .V.Data.Errors.Has .X.Name}} has-error{{end}}">
+  {{template "field_label" .}}
+  <select id="f-{{.X.Name}}" name="{{.X.Name}}"{{if .X.Required}} required{{end}}>
+    <option value="">{{if .X.Required}}{{.V.T "form.choose"}}{{else}}—{{end}}</option>
+    {{- range .X.Options}}
+    <option value="{{.}}"{{if eq . $.X.Value}} selected{{end}}>{{$.V.T (print $.X.Prefix .)}}</option>
+    {{- end}}
+  </select>
+  {{template "field_error" (pair .V .X.Name)}}
+</div>
+{{end}}
+
+{{define "field_tags"}}
+<div class="field{{if .V.Data.Errors.Has .X.Name}} has-error{{end}}">
+  {{template "field_label" .}}
+  <input id="f-{{.X.Name}}" name="{{.X.Name}}" value="{{.X.Value}}" maxlength="400" autocomplete="off" aria-describedby="h-{{.X.Name}}">
+  {{template "field_hint" .}}
+  {{- with .X.Hints}}
+  <div class="chips tag-hints" data-tags-for="f-{{$.X.Name}}">
+    {{- range .}}<button type="button" class="chip" data-tag="{{.}}">+ {{.}}</button>{{end}}
+  </div>
+  {{- end}}
+  {{template "field_error" (pair .V .X.Name)}}
+</div>
+{{end}}

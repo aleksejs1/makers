@@ -1,0 +1,100 @@
+{{define "content"}}
+{{- $p := .Data.Project}}
+<article class="project">
+  {{- if $p.HiddenAt}}
+  <div class="notice notice-warn">{{.T "moderation.project_hidden"}}</div>
+  {{- end}}
+  {{- if $p.OwnerBanned}}
+  <div class="notice notice-warn">{{.T "moderation.owner_banned"}}</div>
+  {{- end}}
+
+  <header class="project-head">
+    <span class="avatar avatar-lg {{avatar $p.Slug}}" aria-hidden="true">{{initials $p.Name}}</span>
+    <div class="project-title">
+      <h1>{{$p.Name}}</h1>
+      <p class="tagline-lg" lang="{{$p.ContentLang}}">{{$p.Tagline}}</p>
+      <div class="project-actions">
+        <a class="btn btn-primary" href="{{$p.URL}}" target="_blank" rel="noopener nofollow ugc">{{.T "project.visit"}} {{template "icon_external"}}</a>
+        {{- with $p.GitHubURL}}
+        <a class="btn" href="{{.}}" target="_blank" rel="noopener nofollow ugc">{{template "icon_code"}} {{$.T "project.source"}}</a>
+        {{- end}}
+        {{template "like_button" (pair . $p)}}
+        {{- if .CanEdit $p.OwnerID}}
+        <a class="btn btn-ghost" href="{{.URL (print "/p/" $p.Slug "/edit")}}">{{.T "project.edit"}}</a>
+        {{- end}}
+      </div>
+    </div>
+  </header>
+
+  <div class="project-grid">
+    <div class="project-main">
+      {{- with embed $p.VideoURL}}
+      <div class="video">
+        <iframe src="{{.}}" title="{{$.T "project.video"}}" loading="lazy" allowfullscreen
+                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      </div>
+      {{- end}}
+      <div class="prose" lang="{{$p.ContentLang}}">{{markdown $p.Description}}</div>
+      {{template "comments" (pair . .Data)}}
+    </div>
+
+    <aside class="project-meta" aria-label="{{.T "project.details"}}">
+      <dl>
+        <dt>{{.T "field.status"}}</dt>
+        <dd>{{template "status" (pair . $p.Status)}}</dd>
+        <dt>{{.T "field.category"}}</dt>
+        <dd><a href="{{.URL "/"}}?category={{$p.Category}}">{{.T (print "category." $p.Category)}}</a></dd>
+        {{- if $p.LaunchDate}}
+        <dt>{{.T "field.launch_date"}}</dt>
+        <dd><time datetime="{{$p.LaunchDate}}">{{.Date $p.Launch}}</time>{{if $p.Launch.After .Data.Now}} <span class="chip chip-accent">{{.T "project.soon"}}</span>{{end}}</dd>
+        {{- end}}
+        <dt>{{.T "field.link"}}</dt>
+        <dd><a href="{{$p.URL}}" target="_blank" rel="noopener nofollow ugc">{{host $p.URL}}</a></dd>
+        {{- with $p.City}}
+        <dt>{{$.T "field.city"}}</dt>
+        <dd>{{.}}</dd>
+        {{- end}}
+        {{- with $p.Pricing}}
+        <dt>{{$.T "field.pricing"}}</dt>
+        <dd>{{$.T (print "pricing." .)}}</dd>
+        {{- end}}
+        {{- if $p.IsOpenSource}}
+        <dt>{{.T "field.license"}}</dt>
+        <dd>{{.T "project.open_source"}}</dd>
+        {{- end}}
+        {{- with $p.ProductLangs}}
+        <dt>{{$.T "field.product_langs"}}</dt>
+        <dd>{{range $i, $l := .}}{{if $i}}, {{end}}{{$.T (print "lang." $l)}}{{end}}</dd>
+        {{- end}}
+        {{- with $p.LookingFor}}
+        <dt>{{$.T "field.looking_for"}}</dt>
+        <dd class="chips">{{range .}}<span class="chip chip-accent">{{$.T (print "looking." .)}}</span>{{end}}</dd>
+        {{- end}}
+        {{- with $p.Tech}}
+        <dt>{{$.T "field.tech"}}</dt>
+        <dd class="chips">{{range .}}<a class="chip" href="{{$.URL "/"}}?tech={{.}}">{{.}}</a>{{end}}</dd>
+        {{- end}}
+        {{- with $p.AI}}
+        <dt>{{$.T "field.ai"}}</dt>
+        <dd class="chips">{{range .}}<a class="chip chip-ai" href="{{$.URL "/"}}?ai={{.}}">{{.}}</a>{{end}}</dd>
+        {{- end}}
+        <dt>{{.T "project.maker"}}</dt>
+        <dd>
+          <a class="maker" href="{{.URL (print "/u/" $p.OwnerHandle)}}">
+            <span class="avatar avatar-sm {{avatar $p.OwnerHandle}}" aria-hidden="true">{{initials $p.OwnerName}}</span>
+            {{$p.OwnerName}}
+          </a>
+        </dd>
+        <dt>{{.T "project.added"}}</dt>
+        <dd>{{.Date $p.CreatedAt}}</dd>
+      </dl>
+      {{- if and .User .User.IsAdmin}}
+      <form method="post" action="{{.URL (print "/admin/projects/" $p.Slug "/hide")}}" class="admin-box">
+        <button type="submit" class="btn btn-sm btn-danger">{{if $p.HiddenAt}}{{.T "moderation.unhide"}}{{else}}{{.T "moderation.hide"}}{{end}}</button>
+      </form>
+      {{- end}}
+    </aside>
+  </div>
+</article>
+{{end}}

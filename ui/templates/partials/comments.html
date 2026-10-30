@@ -1,0 +1,58 @@
+{{/* Comment section; data: Pair{V, projectData}. Swapped by htmx. */}}
+{{define "comments"}}
+<section id="comments" class="comments" aria-labelledby="comments-title">
+  <h2 id="comments-title">{{.V.TN "comments.count" (len .X.Comments)}}</h2>
+  {{- range .X.Comments}}
+  <article class="comment{{if .HiddenAt}} is-hidden{{end}}" id="c{{.ID}}">
+    <header class="comment-head">
+      <a class="comment-author" href="{{$.V.URL (print "/u/" .UserHandle)}}">
+        <span class="avatar avatar-sm {{avatar .UserHandle}}" aria-hidden="true">{{initials .UserName}}</span>
+        <strong>{{.UserName}}</strong>
+      </a>
+      {{- if eq .UserID $.X.Project.OwnerID}}<span class="chip chip-accent">{{$.V.T "comments.author"}}</span>{{end}}
+      <time class="muted small" datetime="{{.CreatedAt.Format "2006-01-02T15:04:05Z07:00"}}">{{$.V.DateTime .CreatedAt}}</time>
+      {{- if .HiddenAt}}<span class="chip chip-warn">{{$.V.T "moderation.hidden"}}</span>{{end}}
+      <span class="comment-actions">
+        {{- if $.V.CanEdit .UserID}}
+        <form method="post" action="{{$.V.URL (print "/comments/" .ID "/delete")}}"
+              hx-post="{{$.V.URL (print "/comments/" .ID "/delete")}}" hx-target="#comments" hx-swap="outerHTML"
+              hx-confirm="{{$.V.T "comments.delete_confirm"}}">
+          <input type="hidden" name="slug" value="{{$.X.Project.Slug}}">
+          <button type="submit" class="linklike small">{{$.V.T "comments.delete"}}</button>
+        </form>
+        {{- end}}
+        {{- if and $.V.User $.V.User.IsAdmin}}
+        <form method="post" action="{{$.V.URL (print "/admin/comments/" .ID "/hide")}}"
+              hx-post="{{$.V.URL (print "/admin/comments/" .ID "/hide")}}" hx-target="#comments" hx-swap="outerHTML">
+          <input type="hidden" name="slug" value="{{$.X.Project.Slug}}">
+          <button type="submit" class="linklike small">{{if .HiddenAt}}{{$.V.T "moderation.unhide"}}{{else}}{{$.V.T "moderation.hide"}}{{end}}</button>
+        </form>
+        {{- end}}
+      </span>
+    </header>
+    <div class="comment-body">{{.Body}}</div>
+  </article>
+  {{- else}}
+  <p class="muted">{{.V.T "comments.empty"}}</p>
+  {{- end}}
+
+  {{- if .V.User}}
+  <form class="comment-form" method="post" action="{{.V.URL (print "/p/" .X.Project.Slug "/comments")}}"
+        hx-post="{{.V.URL (print "/p/" .X.Project.Slug "/comments")}}" hx-target="#comments" hx-swap="outerHTML">
+    <label for="comment-body" class="sr-only">{{.V.T "comments.label"}}</label>
+    <textarea id="comment-body" name="body" rows="3" maxlength="2000" required
+              placeholder="{{.V.T "comments.placeholder"}}"{{if .X.Error}} aria-invalid="true" aria-describedby="comment-error"{{end}}>{{.X.Body}}</textarea>
+    {{- with .X.Error}}
+    <p class="field-error" id="comment-error">{{$.V.T . "Max" 2000}}</p>
+    {{- end}}
+    {{template "honeypot" .V}}
+    <button type="submit" class="btn btn-primary">{{.V.T "comments.submit"}}</button>
+  </form>
+  {{- else}}
+  <p class="login-hint"><a href="{{.V.URL "/login"}}?next={{.V.URL (print "/p/" .X.Project.Slug)}}">{{.V.T "nav.login"}}</a> — {{.V.T "comments.login"}}</p>
+  {{- end}}
+</section>
+{{end}}
+
+{{/* Hidden field that only bots fill in. */}}
+{{define "honeypot"}}<div class="hp" aria-hidden="true"><label>Website <input type="text" name="homepage" tabindex="-1" autocomplete="off"></label></div>{{end}}

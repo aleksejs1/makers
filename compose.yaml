@@ -1,0 +1,21 @@
+# Example production deployment. Put a TLS-terminating reverse proxy
+# (Caddy, nginx, Traefik, ...) in front and point it at MAKERS_PORT.
+#
+#   cp .env.example .env   # then edit it
+#   docker compose up -d
+
+services:
+  makers:
+    image: ghcr.io/aleksejs1/makers:latest
+    build:
+      context: .
+      target: prod
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "127.0.0.1:${MAKERS_PORT:-8080}:${MAKERS_PORT:-8080}"
+    volumes:
+      - makers-data:/data
+
+volumes:
+  makers-data:

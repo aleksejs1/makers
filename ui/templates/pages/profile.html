@@ -1,0 +1,44 @@
+{{define "content"}}
+{{- $d := .Data}}
+{{- $u := $d.Profile}}
+<section class="profile">
+  {{- if $u.BannedAt}}
+  <div class="notice notice-warn">{{.T "moderation.user_banned"}}</div>
+  {{- end}}
+  <header class="profile-head">
+    <span class="avatar avatar-lg {{avatar $u.Handle}}" aria-hidden="true">{{initials $u.Name}}</span>
+    <div>
+      <h1>{{$u.Name}}</h1>
+      <p class="muted">@{{$u.Handle}} · {{.T "profile.joined" "Date" (.Date $u.CreatedAt)}}</p>
+      {{- with $u.Bio}}
+      <p class="bio">{{.}}</p>
+      {{- end}}
+      <p class="links">
+        {{- with $u.Website}}<a href="{{.}}" target="_blank" rel="noopener nofollow ugc me">{{host .}}</a>{{end}}
+        {{- with $u.GitHub}}<a href="{{.}}" target="_blank" rel="noopener nofollow ugc me">{{host .}}</a>{{end}}
+        {{- with $u.Social}}<a href="{{.}}" target="_blank" rel="noopener nofollow ugc me">{{host .}}</a>{{end}}
+      </p>
+      {{- if $d.IsSelf}}
+      <p><a class="btn btn-sm" href="{{.URL "/settings"}}">{{.T "profile.edit"}}</a></p>
+      {{- end}}
+      {{- if and .User .User.IsAdmin (not $d.IsSelf)}}
+      <form method="post" action="{{.URL (print "/admin/users/" $u.Handle "/ban")}}" class="admin-box">
+        <button type="submit" class="btn btn-sm btn-danger">{{if $u.BannedAt}}{{.T "moderation.unban"}}{{else}}{{.T "moderation.ban"}}{{end}}</button>
+      </form>
+      {{- end}}
+    </div>
+  </header>
+
+  <h2>{{.TN "profile.projects" (len $d.Projects)}}</h2>
+  {{- if $d.Projects}}
+  {{template "project_table" (pair . $d.Projects)}}
+  {{- else}}
+  <div class="empty">
+    <p>{{.T "profile.no_projects"}}</p>
+    {{- if $d.IsSelf}}
+    <a class="btn btn-primary" href="{{.URL "/new"}}">{{.T "nav.add_project"}}</a>
+    {{- end}}
+  </div>
+  {{- end}}
+</section>
+{{end}}

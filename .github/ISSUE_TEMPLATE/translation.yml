@@ -1,0 +1,21 @@
+name: Translation issue
+description: A wrong, awkward or missing translation (LV / EN / RU)
+labels: [i18n]
+body:
+  - type: dropdown
+    id: lang
+    attributes:
+      label: Language
+      options: [Latviešu, English, Русский, Other]
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: Page URL
+  - type: textarea
+    id: text
+    attributes:
+      label: Current text and suggested text
+    validations:
+      required: true

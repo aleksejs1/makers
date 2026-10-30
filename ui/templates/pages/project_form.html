@@ -1,0 +1,88 @@
+{{define "content"}}
+{{- $f := .Data}}
+{{- $in := $f.In}}
+<div class="narrow">
+  <h1>{{.Title}}</h1>
+  {{- if $f.Errors}}
+  <div class="notice notice-error" role="alert">{{if $f.Errors.Has "form"}}{{.T ($f.Errors.Get "form")}}{{else}}{{.T "form.has_errors"}}{{end}}</div>
+  {{- end}}
+
+  <form class="form" method="post" novalidate
+        action="{{if $f.Project}}{{.URL (print "/p/" $f.Project.Slug "/edit")}}{{else}}{{.URL "/new"}}{{end}}">
+    <fieldset>
+      <legend>{{.T "form.section.basics"}}</legend>
+      {{template "field_text" (pair . (field "name" $in.Name 60 true "text"))}}
+      {{template "field_text" (pair . (field "tagline" $in.Tagline 140 true "text"))}}
+      <div class="field{{if $f.Errors.Has "description"}} has-error{{end}}">
+        <label for="f-description">{{.T "field.description"}} <span class="req" aria-hidden="true">*</span></label>
+        <textarea id="f-description" name="description" rows="10" maxlength="5000" required aria-describedby="h-description">{{$in.Description}}</textarea>
+        <p class="hint" id="h-description">{{.T "field.description.hint"}}</p>
+        {{template "field_error" (pair . "description")}}
+      </div>
+      <div class="row">
+        {{template "field_select" (pair . (selectField "category" $in.Category "category." categories true))}}
+        {{template "field_select" (pair . (selectField "status" $in.Status "status." statuses true))}}
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>{{.T "form.section.links"}}</legend>
+      {{template "field_text" (pair . (field "url" $in.URL 300 true "url"))}}
+      {{template "field_text" (pair . (field "github_url" $in.GitHubURL 300 false "url"))}}
+      {{template "field_text" (pair . (field "video_url" $in.VideoURL 300 false "url"))}}
+    </fieldset>
+
+    <fieldset>
+      <legend>{{.T "form.section.tech"}}</legend>
+      {{template "field_tags" (pair . (tagsField "tech" $f.TechStr $f.TechHints))}}
+      {{template "field_tags" (pair . (tagsField "ai" $f.AIStr $f.AIHints))}}
+    </fieldset>
+
+    <fieldset>
+      <legend>{{.T "form.section.details"}}</legend>
+      <div class="row">
+        {{template "field_text" (pair . (field "launch_date" $in.LaunchDate 10 false "date"))}}
+        <div class="field{{if $f.Errors.Has "city"}} has-error{{end}}">
+          <label for="f-city">{{.T "field.city"}}</label>
+          <input id="f-city" name="city" value="{{$in.City}}" maxlength="40" list="city-hints">
+          <datalist id="city-hints">{{range cities}}<option value="{{.}}">{{end}}</datalist>
+          {{template "field_error" (pair . "city")}}
+        </div>
+      </div>
+      <div class="row">
+        {{template "field_select" (pair . (selectField "pricing" $in.Pricing "pricing." pricings false))}}
+        {{template "field_select" (pair . (selectField "content_lang" $in.ContentLang "lang." contentLangs true))}}
+      </div>
+      <fieldset class="checks">
+        <legend>{{.T "field.product_langs"}}</legend>
+        {{- range productLangs}}
+        <label class="check"><input type="checkbox" name="product_langs" value="{{.}}"{{if oneOf . $in.ProductLangs}} checked{{end}}> {{$.T (print "lang." .)}}</label>
+        {{- end}}
+      </fieldset>
+      <fieldset class="checks">
+        <legend>{{.T "field.looking_for"}}</legend>
+        {{- range lookingFor}}
+        <label class="check"><input type="checkbox" name="looking_for" value="{{.}}"{{if oneOf . $in.LookingFor}} checked{{end}}> {{$.T (print "looking." .)}}</label>
+        {{- end}}
+      </fieldset>
+      <label class="check"><input type="checkbox" name="is_open_source" value="1"{{if $in.IsOpenSource}} checked{{end}}> {{.T "field.is_open_source"}}</label>
+    </fieldset>
+
+    {{template "honeypot" .}}
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">{{if $f.Project}}{{.T "form.save"}}{{else}}{{.T "form.publish"}}{{end}}</button>
+      <a class="btn btn-ghost" href="{{if $f.Project}}{{.URL (print "/p/" $f.Project.Slug)}}{{else}}{{.URL "/"}}{{end}}">{{.T "form.cancel"}}</a>
+    </div>
+  </form>
+
+  {{- if $f.Project}}
+  <form class="danger-zone" method="post" action="{{.URL (print "/p/" $f.Project.Slug "/delete")}}">
+    <h2>{{.T "project.delete.title"}}</h2>
+    <p>{{.T "project.delete.text"}}</p>
+    <label class="check"><input type="checkbox" name="confirm" value="1" required> {{.T "project.delete.confirm"}}</label>
+    {{template "field_error" (pair . "delete")}}
+    <button type="submit" class="btn btn-danger">{{.T "project.delete.button"}}</button>
+  </form>
+  {{- end}}
+</div>
+{{end}}

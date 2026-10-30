@@ -1,0 +1,46 @@
+{{define "content"}}
+{{- $d := .Data}}
+<div class="auth-card">
+  <h1>{{.T "login.title"}}</h1>
+  {{- with $d.Error}}
+  <div class="notice notice-error" role="alert">{{$.T .}}</div>
+  {{- end}}
+
+  {{- if $d.Sent}}
+  {{- if $d.Notice}}
+  <div class="notice notice-info" role="status">{{.T $d.Notice "Email" $d.Email}}</div>
+  {{- else}}
+  <p>{{.T "login.sent" "Email" $d.Email}}</p>
+  {{- end}}
+  <form class="form" method="post" action="{{.URL "/login/verify"}}">
+    <input type="hidden" name="email" value="{{$d.Email}}">
+    <input type="hidden" name="next" value="{{$d.Next}}">
+    <div class="field">
+      <label for="f-code">{{.T "login.code"}}</label>
+      <input id="f-code" class="code-input" name="code" inputmode="numeric" autocomplete="one-time-code"
+             pattern="[0-9 \-]*" maxlength="12" placeholder="1234 5678" required autofocus>
+    </div>
+    <button type="submit" class="btn btn-primary btn-block">{{.T "login.verify"}}</button>
+  </form>
+  <form method="post" action="{{.URL "/login"}}" class="resend">
+    <input type="hidden" name="email" value="{{$d.Email}}">
+    <input type="hidden" name="next" value="{{$d.Next}}">
+    <span class="muted small">{{.T "login.no_code"}}</span>
+    <button type="submit" class="linklike small">{{.T "login.resend"}}</button>
+    · <a class="small" href="{{.URL "/login"}}?next={{$d.Next}}">{{.T "login.other_email"}}</a>
+  </form>
+  {{- else}}
+  <p>{{.T "login.intro"}}</p>
+  <form class="form" method="post" action="{{.URL "/login"}}">
+    <input type="hidden" name="next" value="{{$d.Next}}">
+    <div class="field">
+      <label for="f-email">{{.T "login.email"}}</label>
+      <input id="f-email" name="email" type="email" value="{{$d.Email}}" autocomplete="email" required autofocus maxlength="254">
+    </div>
+    {{template "honeypot" .}}
+    <button type="submit" class="btn btn-primary btn-block">{{.T "login.send"}}</button>
+  </form>
+  <p class="muted small">{{.T "login.privacy"}} <a href="{{.URL "/privacy"}}">{{.T "nav.privacy"}}</a></p>
+  {{- end}}
+</div>
+{{end}}

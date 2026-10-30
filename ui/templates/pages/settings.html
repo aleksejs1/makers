@@ -1,0 +1,52 @@
+{{define "content"}}
+{{- $d := .Data}}
+{{- $u := $d.Form}}
+<div class="narrow">
+  <h1>{{.T "settings.title"}}</h1>
+  {{- if and $d.Errors (not ($d.Errors.Has "delete"))}}
+  <div class="notice notice-error" role="alert">{{.T "form.has_errors"}}</div>
+  {{- end}}
+
+  <form class="form" method="post" action="{{.URL "/settings"}}" novalidate>
+    <input type="hidden" name="next" value="{{$d.Next}}">
+    <fieldset>
+      <legend>{{.T "settings.profile"}}</legend>
+      <div class="row">
+        {{template "field_text" (pair . (field "display_name" $u.Name 60 true "text"))}}
+        {{template "field_text" (pair . (field "handle" $u.Handle 30 true "text"))}}
+      </div>
+      <div class="field{{if $d.Errors.Has "bio"}} has-error{{end}}">
+        <label for="f-bio">{{.T "field.bio"}}</label>
+        <textarea id="f-bio" name="bio" rows="3" maxlength="280">{{$u.Bio}}</textarea>
+        {{template "field_error" (pair . "bio")}}
+      </div>
+      {{template "field_text" (pair . (field "website" $u.Website 300 false "url"))}}
+      {{template "field_text" (pair . (field "github" $u.GitHub 300 false "url"))}}
+      {{template "field_text" (pair . (field "social" $u.Social 300 false "url"))}}
+      <p class="hint">{{.T "settings.email" "Email" $u.Email}}</p>
+    </fieldset>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">{{.T "form.save"}}</button>
+    </div>
+  </form>
+
+  <section class="settings-section">
+    <h2>{{.T "settings.sessions"}}</h2>
+    <p>{{.T "settings.sessions.text"}}</p>
+    <form method="post" action="{{.URL "/settings/logout-all"}}">
+      <button type="submit" class="btn">{{.T "settings.logout_all"}}</button>
+    </form>
+  </section>
+
+  <form class="danger-zone" method="post" action="{{.URL "/settings/delete"}}">
+    <h2>{{.T "settings.delete.title"}}</h2>
+    <p>{{.T "settings.delete.text"}}</p>
+    <div class="field{{if $d.Errors.Has "delete"}} has-error{{end}}">
+      <label for="f-confirm">{{.T "settings.delete.confirm" "Handle" .User.Handle}}</label>
+      <input id="f-confirm" name="confirm" autocomplete="off" required>
+      {{template "field_error" (pair . "delete")}}
+    </div>
+    <button type="submit" class="btn btn-danger">{{.T "settings.delete.button"}}</button>
+  </form>
+</div>
+{{end}}
