@@ -51,6 +51,10 @@
         {{- end}}
         <dt>{{.T "field.link"}}</dt>
         <dd><a href="{{$p.URL}}" target="_blank" rel="noopener nofollow ugc">{{host $p.URL}}</a></dd>
+        {{- with $p.Links}}
+        <dt>{{$.T "project.elsewhere"}}</dt>
+        <dd class="chips">{{range .}}<a class="chip" href="{{.}}" target="_blank" rel="noopener nofollow ugc">{{linkName .}}</a>{{end}}</dd>
+        {{- end}}
         {{- with $p.City}}
         <dt>{{$.T "field.city"}}</dt>
         <dd>{{.}}</dd>

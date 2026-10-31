@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-31
+
+### Added
+
+- "Other links" on projects: up to 6 extra links (social accounts, app
+  stores, …), shown on the project page with the platform name.
+
+### Changed
+
+- A social media link in the video field now explains that only YouTube,
+  Vimeo and Loom videos can be embedded and points to "Other links".
+
 ## [0.1.0] - 2026-10-30
 
 First public version.
@@ -28,5 +40,6 @@ First public version.
 - Multi-stage Dockerfile (`dev`, `test`, `lint`, `build`, `prod`) and a `FROM scratch` runtime image.
 - `makers healthcheck` and `makers backup` commands.
 
-[Unreleased]: https://github.com/aleksejs1/makers/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/aleksejs1/makers/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/aleksejs1/makers/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/aleksejs1/makers/releases/tag/v0.1.0

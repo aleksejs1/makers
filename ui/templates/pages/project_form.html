@@ -30,6 +30,13 @@
       {{template "field_text" (pair . (field "url" $in.URL 300 true "url"))}}
       {{template "field_text" (pair . (field "github_url" $in.GitHubURL 300 false "url"))}}
       {{template "field_text" (pair . (field "video_url" $in.VideoURL 300 false "url"))}}
+      <div class="field{{if $f.Errors.Has "links"}} has-error{{end}}">
+        <label for="f-links">{{.T "field.links"}}</label>
+        <textarea id="f-links" name="links" rows="3" maxlength="2000" inputmode="url" placeholder="https://www.tiktok.com/@…"
+                  aria-describedby="h-links"{{if $f.Errors.Has "links"}} aria-invalid="true"{{end}}>{{$f.LinksStr}}</textarea>
+        <p class="hint" id="h-links">{{.T "field.links.hint"}}</p>
+        {{template "field_error" (pair . "links")}}
+      </div>
     </fieldset>
 
     <fieldset>

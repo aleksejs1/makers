@@ -18,6 +18,9 @@ const (
 	TagAI   = "ai"
 )
 
+// linkSep separates the URLs stored in projects.links.
+const linkSep = "\n"
+
 // ProjectInput holds the editable fields of a project.
 type ProjectInput struct {
 	Name         string
@@ -26,7 +29,8 @@ type ProjectInput struct {
 	URL          string
 	GitHubURL    string
 	VideoURL     string
-	LaunchDate   string // YYYY-MM-DD or empty
+	Links        []string // extra links, e.g. social accounts
+	LaunchDate   string   // YYYY-MM-DD or empty
 	Status       string
 	Category     string
 	ContentLang  string
@@ -89,7 +93,7 @@ type ListParams struct {
 const projectSelect = `SELECT p.id, p.slug, p.owner_id, u.handle, u.name, u.banned_at IS NOT NULL,
 	p.name, p.tagline, p.description, p.url, p.github_url, p.video_url, p.launch_date,
 	p.status, p.category, p.content_lang, p.product_langs, p.looking_for, p.pricing,
-	p.is_open_source, p.city, p.hidden_at, p.created_at, p.updated_at,
+	p.is_open_source, p.city, p.links, p.hidden_at, p.created_at, p.updated_at,
 	(SELECT COUNT(*) FROM likes l WHERE l.project_id = p.id) AS likes_count,
 	(SELECT COUNT(*) FROM comments c JOIN users cu ON cu.id = c.user_id
 	 WHERE c.project_id = p.id AND c.hidden_at IS NULL AND cu.banned_at IS NULL),
@@ -98,12 +102,12 @@ const projectSelect = `SELECT p.id, p.slug, p.owner_id, u.handle, u.name, u.bann
 
 func scanProject(row scanner) (*Project, error) {
 	var p Project
-	var productLangs, lookingFor, created, updated string
+	var productLangs, lookingFor, links, created, updated string
 	var hidden sql.NullString
 	err := row.Scan(&p.ID, &p.Slug, &p.OwnerID, &p.OwnerHandle, &p.OwnerName, &p.OwnerBanned,
 		&p.Name, &p.Tagline, &p.Description, &p.URL, &p.GitHubURL, &p.VideoURL, &p.LaunchDate,
 		&p.Status, &p.Category, &p.ContentLang, &productLangs, &lookingFor, &p.Pricing,
-		&p.IsOpenSource, &p.City, &hidden, &created, &updated,
+		&p.IsOpenSource, &p.City, &links, &hidden, &created, &updated,
 		&p.Likes, &p.Comments, &p.Liked)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrNotFound
@@ -113,6 +117,9 @@ func scanProject(row scanner) (*Project, error) {
 	}
 	p.ProductLangs = splitList(productLangs)
 	p.LookingFor = splitList(lookingFor)
+	if links != "" {
+		p.Links = strings.Split(links, linkSep)
+	}
 	p.HiddenAt = parseNullTime(hidden)
 	p.CreatedAt = parseTime(created)
 	p.UpdatedAt = parseTime(updated)
@@ -234,11 +241,11 @@ func (s *Store) CreateProject(ctx context.Context, ownerID int64, in ProjectInpu
 		}
 		res, err := tx.ExecContext(ctx, `INSERT INTO projects (slug, owner_id, name, tagline, description,
 			url, github_url, video_url, launch_date, status, category, content_lang, product_langs,
-			looking_for, pricing, is_open_source, city, created_at, updated_at)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			looking_for, pricing, is_open_source, city, links, created_at, updated_at)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			slugStr, ownerID, in.Name, in.Tagline, in.Description, in.URL, in.GitHubURL, in.VideoURL,
 			in.LaunchDate, in.Status, in.Category, in.ContentLang, strings.Join(in.ProductLangs, ","),
-			strings.Join(in.LookingFor, ","), in.Pricing, in.IsOpenSource, in.City, now, now)
+			strings.Join(in.LookingFor, ","), in.Pricing, in.IsOpenSource, in.City, strings.Join(in.Links, linkSep), now, now)
 		if isUniqueViolation(err) {
 			continue
 		}
@@ -267,10 +274,10 @@ func (s *Store) UpdateProject(ctx context.Context, id int64, in ProjectInput) er
 	if _, err := tx.ExecContext(ctx, `UPDATE projects SET name = ?, tagline = ?, description = ?,
 		url = ?, github_url = ?, video_url = ?, launch_date = ?, status = ?, category = ?,
 		content_lang = ?, product_langs = ?, looking_for = ?, pricing = ?, is_open_source = ?,
-		city = ?, updated_at = ? WHERE id = ?`,
+		city = ?, links = ?, updated_at = ? WHERE id = ?`,
 		in.Name, in.Tagline, in.Description, in.URL, in.GitHubURL, in.VideoURL, in.LaunchDate,
 		in.Status, in.Category, in.ContentLang, strings.Join(in.ProductLangs, ","),
-		strings.Join(in.LookingFor, ","), in.Pricing, in.IsOpenSource, in.City, fmtTime(s.now()), id); err != nil {
+		strings.Join(in.LookingFor, ","), in.Pricing, in.IsOpenSource, in.City, strings.Join(in.Links, linkSep), fmtTime(s.now()), id); err != nil {
 		return err
 	}
 	if _, err := tx.ExecContext(ctx, "DELETE FROM project_tags WHERE project_id = ?", id); err != nil {

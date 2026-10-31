@@ -7,6 +7,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/aleksejs1/makers/internal/social"
 	"github.com/aleksejs1/makers/internal/store"
 	"github.com/aleksejs1/makers/internal/video"
 )
@@ -32,6 +33,7 @@ const (
 	maxCity        = 40
 	maxTag         = 30
 	maxTags        = 10
+	maxLinks       = 6
 	maxComment     = 2000
 	maxBio         = 280
 	maxUserName    = 60
@@ -47,6 +49,7 @@ func (e formErrors) Get(field string) string { return e[field] }
 // projectForm is the template data of the project editor.
 type projectForm struct {
 	In        store.ProjectInput
+	LinksStr  string
 	TechStr   string
 	AIStr     string
 	Errors    formErrors
@@ -74,7 +77,8 @@ func parseProjectForm(r *http.Request) projectForm {
 		IsOpenSource: f.Get("is_open_source") == "1",
 		City:         clean(f.Get("city")),
 	}
-	pf := projectForm{In: in, TechStr: f.Get("tech"), AIStr: f.Get("ai"), Errors: formErrors{}}
+	pf := projectForm{In: in, LinksStr: f.Get("links"), TechStr: f.Get("tech"), AIStr: f.Get("ai"), Errors: formErrors{}}
+	pf.In.Links = parseLinks(pf.LinksStr)
 	pf.In.Tech = parseTags(pf.TechStr)
 	pf.In.AI = parseTags(pf.AIStr)
 	pf.validate()
@@ -111,6 +115,17 @@ func (pf *projectForm) validate() {
 	}
 	if in.VideoURL != "" && video.EmbedURL(in.VideoURL) == "" {
 		e["video_url"] = "form.error.video"
+		// Usually a profile or a video on an unsupported platform: point
+		// the maker to the links field instead.
+		if social.Platform(normalizeURL(in.VideoURL)) != "" {
+			e["video_url"] = "form.error.video_social"
+		}
+	}
+	switch {
+	case len(in.Links) > maxLinks:
+		e["links"] = "form.error.too_many_links"
+	case !all(in.Links, validURL):
+		e["links"] = "form.error.links"
 	}
 	if in.LaunchDate != "" {
 		t, err := time.Parse(time.DateOnly, in.LaunchDate)
@@ -143,11 +158,12 @@ func (pf *projectForm) validate() {
 
 func projectToForm(p *store.Project) projectForm {
 	return projectForm{
-		In:      p.ProjectInput,
-		TechStr: strings.Join(p.Tech, ", "),
-		AIStr:   strings.Join(p.AI, ", "),
-		Errors:  formErrors{},
-		Project: p,
+		In:       p.ProjectInput,
+		LinksStr: strings.Join(p.Links, "\n"),
+		TechStr:  strings.Join(p.Tech, ", "),
+		AIStr:    strings.Join(p.AI, ", "),
+		Errors:   formErrors{},
+		Project:  p,
 	}
 }
 
@@ -176,6 +192,31 @@ func validURL(s string) bool {
 	u, err := url.Parse(s)
 	return err == nil && (u.Scheme == "http" || u.Scheme == "https") &&
 		strings.Contains(u.Hostname(), ".") && u.User == nil
+}
+
+// parseLinks splits whitespace-separated URLs (normally one per line),
+// normalizing and de-duplicating them.
+func parseLinks(s string) []string {
+	seen := map[string]bool{}
+	var out []string
+	for _, l := range strings.Fields(strings.ToValidUTF8(s, "")) {
+		l = normalizeURL(l)
+		if seen[strings.ToLower(l)] {
+			continue
+		}
+		seen[strings.ToLower(l)] = true
+		out = append(out, l)
+	}
+	return out
+}
+
+func all(list []string, ok func(string) bool) bool {
+	for _, s := range list {
+		if !ok(s) {
+			return false
+		}
+	}
+	return true
 }
 
 func oneOf(s string, list []string) bool {

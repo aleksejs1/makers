@@ -18,6 +18,7 @@ import (
 
 	"github.com/aleksejs1/makers/internal/i18n"
 	"github.com/aleksejs1/makers/internal/markdown"
+	"github.com/aleksejs1/makers/internal/social"
 	"github.com/aleksejs1/makers/internal/store"
 	"github.com/aleksejs1/makers/internal/video"
 )
@@ -226,6 +227,7 @@ func (s *Server) funcs() template.FuncMap {
 		"markdown": markdown.Render,
 		"embed":    video.EmbedURL,
 		"host":     displayHost,
+		"linkName": linkName,
 		"initials": initials,
 		"avatar":   avatarClass,
 		"oneOf":    oneOf,
@@ -315,6 +317,15 @@ func avatarClass(s string) string {
 }
 
 // displayHost returns a short host+path for showing a link.
+// linkName labels an extra project link: the platform name when known,
+// the host otherwise.
+func linkName(raw string) string {
+	if p := social.Platform(raw); p != "" {
+		return p
+	}
+	return displayHost(raw)
+}
+
 func displayHost(raw string) string {
 	u, err := url.Parse(raw)
 	if err != nil || u.Host == "" {

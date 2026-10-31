@@ -775,3 +775,44 @@ func TestSitemapIsCapped(t *testing.T) {
 		t.Fatalf("sitemap has %d URLs, cap is 7", n)
 	}
 }
+
+func TestProjectLinks(t *testing.T) {
+	e := newEnv(t)
+	owner := e.client()
+	owner.login("owner@makers.lv")
+
+	// A TikTok account in the video field points the maker to the links field.
+	bad := sampleProject("Kebab Radar")
+	bad.Set("video_url", "https://www.tiktok.com/@kebabradar")
+	expect(t, owner.post("/en/new", bad), 422, "Only a single YouTube, Vimeo or Loom video")
+
+	bad = sampleProject("Kebab Radar")
+	bad.Set("links", "https://ok.example.lv\njavascript:alert(1)")
+	expect(t, owner.post("/en/new", bad), 422, "Each line must be a valid http(s) link.")
+
+	bad.Set("links", "a.lv b.lv c.lv d.lv e.lv f.lv g.lv")
+	expect(t, owner.post("/en/new", bad), 422, "Use at most 6 links.")
+
+	p := sampleProject("Kebab Radar")
+	p.Set("links", "https://www.tiktok.com/@kebabradar\r\n\r\ninstagram.com/kebab\nhttps://www.tiktok.com/@kebabradar\nkebab.example.com/press")
+	if r := owner.post("/en/new", p); r.status != 303 {
+		t.Fatalf("create: %d\n%s", r.status, r.body)
+	}
+	page := owner.get("/en/p/kebab-radar")
+	expect(t, page, 200, "Elsewhere", `href="https://www.tiktok.com/@kebabradar"`, ">TikTok<",
+		`href="https://instagram.com/kebab"`, ">Instagram<", ">kebab.example.com/press<")
+	if n := strings.Count(page.body, ">TikTok<"); n != 1 {
+		t.Errorf("TikTok link shown %d times, want 1", n)
+	}
+
+	// The editor shows the saved links one per line; clearing them works.
+	expect(t, owner.get("/en/p/kebab-radar/edit"), 200,
+		"https://www.tiktok.com/@kebabradar\nhttps://instagram.com/kebab\nhttps://kebab.example.com/press</textarea>")
+	p.Set("links", "")
+	if r := owner.post("/en/p/kebab-radar/edit", p); r.status != 303 {
+		t.Fatalf("edit: %d\n%s", r.status, r.body)
+	}
+	if body := owner.get("/en/p/kebab-radar").body; strings.Contains(body, "Elsewhere") {
+		t.Error("links still shown after clearing them")
+	}
+}
